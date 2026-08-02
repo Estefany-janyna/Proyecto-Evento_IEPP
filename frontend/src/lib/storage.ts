@@ -1,0 +1,1 @@
+export const storage={getToken:()=>localStorage.getItem('token'),setSession:(token:string,user:unknown)=>{localStorage.setItem('token',token);localStorage.setItem('session',JSON.stringify(user));},clear:()=>{localStorage.removeItem('token');localStorage.removeItem('session');}};

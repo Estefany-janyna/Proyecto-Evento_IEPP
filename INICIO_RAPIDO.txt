@@ -1,0 +1,17 @@
+1) Abra XAMPP e inicie Apache y MySQL.
+2) Abra http://localhost/phpmyadmin
+3) Importe database/01_schema.sql y luego database/02_seed.sql
+4) Backend:
+   cd backend
+   copy .env.example .env
+   Edite .env y coloque API_PERU_TOKEN
+   npm install
+   npm run seed:admin
+   npm run seed:demo
+   npm run dev
+5) Frontend, en otra terminal:
+   cd frontend
+   copy .env.example .env
+   npm install
+   npm run dev
+6) Abra http://localhost:5173/registro

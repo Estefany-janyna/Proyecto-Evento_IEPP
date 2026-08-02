@@ -1,0 +1,1 @@
+export { stallService } from './index';

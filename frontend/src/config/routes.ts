@@ -1,0 +1,1 @@
+export const routes={register:'/registro',attendance:'/asistencia',breakfast:'/desayuno',dinner:'/cena',adminLogin:'/admin/login',reports:'/admin/reportes',collaboratorLogin:'/colaborador/login',collaborator:'/colaborador',stallLogin:'/puesto/login',stall:'/puesto'} as const;

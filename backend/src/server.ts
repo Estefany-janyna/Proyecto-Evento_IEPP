@@ -1,0 +1,2 @@
+import http from 'node:http';import { Server } from 'socket.io';import { app } from './app.js';import { env } from './config/env.js';import { testDatabase } from './config/db.js';
+const server=http.createServer(app);const io=new Server(server,{cors:{origin:env.FRONTEND_URL,credentials:true}});app.set('io',io);io.on('connection',s=>{s.emit('connected',{message:'Conectado a IEPP en tiempo real'});});await testDatabase();server.listen(env.PORT,()=>console.log(`API: http://localhost:${env.PORT}/api`));

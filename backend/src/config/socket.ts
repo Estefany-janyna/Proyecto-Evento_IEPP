@@ -1,0 +1,1 @@
+import type {Server as HttpServer} from 'http';import {Server} from 'socket.io';import {env} from './env.js';export function createSocket(server:HttpServer){return new Server(server,{cors:{origin:env.FRONTEND_URL,credentials:true}})}

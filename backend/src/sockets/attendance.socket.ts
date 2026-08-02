@@ -1,0 +1,1 @@
+import type {Server} from 'socket.io';export function registerAttendance(io:Server){io.on('connection',socket=>{socket.on('attendance:created',data=>socket.broadcast.emit('attendance:created',data))})}

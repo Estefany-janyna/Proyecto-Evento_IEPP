@@ -1,0 +1,1 @@
+export function generateDailyCode(){const letter=String.fromCharCode(65+Math.floor(Math.random()*26));const digits=Math.floor(Math.random()*100000).toString().padStart(5,'0');return `${letter}${digits}`;}

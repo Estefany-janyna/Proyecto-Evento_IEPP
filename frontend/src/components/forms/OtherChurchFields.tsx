@@ -1,0 +1,1 @@
+import {Input} from '../ui/Input';export function OtherChurchFields({register}:{register:any}){return <div className="grid gap-4 md:grid-cols-2"><Input placeholder="Región manual" {...register('regionManual')}/><Input placeholder="Iglesia manual" {...register('iglesiaManual')}/></div>}

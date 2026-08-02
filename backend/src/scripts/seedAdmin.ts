@@ -1,0 +1,2 @@
+import bcrypt from 'bcryptjs';import { pool } from '../config/db.js';import { env } from '../config/env.js';
+const hash=await bcrypt.hash(env.ADMIN_PASSWORD,12);await pool.execute(`INSERT INTO usuarios(usuario,password_hash,perfil) VALUES(?,?,'ADMIN_REPORTES') ON DUPLICATE KEY UPDATE password_hash=VALUES(password_hash),estado='ACTIVO'`,[env.ADMIN_USER,hash]);console.log('Administrador creado/actualizado');await pool.end();
