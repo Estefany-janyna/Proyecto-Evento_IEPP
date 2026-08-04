@@ -15,12 +15,31 @@ interface ApiResponse<T> {
 }
 
 interface CatalogApiData {
-  regiones?: PublicCatalogs["regiones"];
-  cargos?: PublicCatalogs["cargos"];
+  regiones?:
+    PublicCatalogs["regiones"];
 
-  // Compatibilidad con la estructura anterior.
-  regions?: PublicCatalogs["regiones"];
-  positions?: PublicCatalogs["cargos"];
+  cargos?:
+    PublicCatalogs["cargos"];
+
+  regions?:
+    PublicCatalogs["regiones"];
+
+  positions?:
+    PublicCatalogs["cargos"];
+}
+
+interface PublicCatalogResult {
+  regiones:
+    PublicCatalogs["regiones"];
+
+  cargos:
+    PublicCatalogs["cargos"];
+
+  regions:
+    PublicCatalogs["regiones"];
+
+  positions:
+    PublicCatalogs["cargos"];
 }
 
 /**
@@ -28,30 +47,78 @@ interface CatalogApiData {
  * catálogos, regiones eclesiásticas, DNI y registro.
  */
 export const publicService = {
-  catalogs: async () => {
-    const response = await api.get<
-      ApiResponse<CatalogApiData>
-    >("/public/catalogs");
+  catalogs:
+  async (): Promise<PublicCatalogResult> => {
+    const response =
+      await api.get<
+        ApiResponse<CatalogApiData>
+      >(
+        "/public/catalogs",
+      );
 
-    const data = response.data.data;
+    const body =
+      response.data;
+
+    if (
+      !body ||
+      typeof body !== "object"
+    ) {
+      throw new Error(
+        "El servidor devolvió una respuesta inválida.",
+      );
+    }
+
+    const data =
+      body.data;
+
+    if (
+      !data ||
+      typeof data !== "object"
+    ) {
+      console.error(
+        "Respuesta inesperada de catálogos:",
+        body,
+      );
+
+      throw new Error(
+        body.message ??
+          "No se recibieron los catálogos del sistema.",
+      );
+    }
 
     const regions =
-      data.regiones ??
-      data.regions ??
-      [];
+      Array.isArray(
+        data.regiones,
+      )
+        ? data.regiones
+        : Array.isArray(
+              data.regions,
+            )
+          ? data.regions
+          : [];
 
     const positions =
-      data.cargos ??
-      data.positions ??
-      [];
+      Array.isArray(
+        data.cargos,
+      )
+        ? data.cargos
+        : Array.isArray(
+              data.positions,
+            )
+          ? data.positions
+          : [];
 
     return {
-      regions,
-      positions,
+      regiones:
+        regions,
 
-      // Compatibilidad con nombres nuevos.
-      regiones: regions,
-      cargos: positions,
+      cargos:
+        positions,
+
+      // Compatibilidad con nombres anteriores.
+      regions,
+
+      positions,
     };
   },
 
