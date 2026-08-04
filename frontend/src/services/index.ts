@@ -56,69 +56,108 @@ export const publicService = {
         "/public/catalogs",
       );
 
-    const body =
-      response.data;
+    /**
+     * Puede recibirse como:
+     *
+     * AxiosResponse:
+     * response.data.data
+     *
+     * Respuesta transformada:
+     * response.data
+     *
+     * Datos directamente:
+     * response
+     */
+    const rawResponse =
+      response as unknown as {
+        data?: unknown;
+      };
 
-    if (
-      !body ||
-      typeof body !== "object"
-    ) {
-      throw new Error(
-        "El servidor devolvió una respuesta inválida.",
-      );
-    }
+    const firstLevel =
+      rawResponse?.data ??
+      rawResponse;
+
+    const firstLevelObject =
+      firstLevel as {
+        ok?: boolean;
+        message?: string;
+        data?: unknown;
+        regiones?: unknown;
+        cargos?: unknown;
+        regions?: unknown;
+        positions?: unknown;
+      };
+
+    const catalogData =
+      firstLevelObject?.data ??
+      firstLevelObject;
 
     const data =
-      body.data;
+      catalogData as {
+        regiones?: unknown;
+        cargos?: unknown;
+        regions?: unknown;
+        positions?: unknown;
+      };
 
-    if (
-      !data ||
-      typeof data !== "object"
-    ) {
-      console.error(
-        "Respuesta inesperada de catálogos:",
-        body,
-      );
+    console.log(
+      "Respuesta original de catálogos:",
+      response,
+    );
 
-      throw new Error(
-        body.message ??
-          "No se recibieron los catálogos del sistema.",
-      );
-    }
+    console.log(
+      "Datos procesados de catálogos:",
+      data,
+    );
 
-    const regions =
+    const regiones =
       Array.isArray(
-        data.regiones,
+        data?.regiones,
       )
         ? data.regiones
         : Array.isArray(
-              data.regions,
+              data?.regions,
             )
           ? data.regions
           : [];
 
-    const positions =
+    const cargos =
       Array.isArray(
-        data.cargos,
+        data?.cargos,
       )
         ? data.cargos
         : Array.isArray(
-              data.positions,
+              data?.positions,
             )
           ? data.positions
           : [];
 
+    if (
+      regiones.length === 0 &&
+      cargos.length === 0
+    ) {
+      console.error(
+        "Estructura inesperada de catálogos:",
+        response,
+      );
+
+      throw new Error(
+        "El servidor respondió, pero no se encontraron regiones ni cargos.",
+      );
+    }
+
     return {
       regiones:
-        regions,
+        regiones as PublicCatalogs["regiones"],
 
       cargos:
-        positions,
+        cargos as PublicCatalogs["cargos"],
 
-      // Compatibilidad con nombres anteriores.
-      regions,
+      regions:
+        regiones as PublicCatalogs["regiones"],
 
-      positions,
+      positions:
+        cargos as PublicCatalogs["cargos"],
     };
   },
 
