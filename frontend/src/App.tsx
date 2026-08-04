@@ -41,6 +41,38 @@ import {
 } from "./pages/admin/ReportsHomePage";
 
 import {
+  AttendeeReportPage,
+} from "./pages/admin/AttendeeReportPage";
+
+import {
+  RegionReportPage,
+} from "./pages/admin/RegionReportPage";
+
+import {
+  ChurchReportPage,
+} from "./pages/admin/ChurchReportPage";
+
+import {
+  ChurchRankingPage,
+} from "./pages/admin/ChurchRankingPage";
+
+import {
+  MealReportPage,
+} from "./pages/admin/MealReportPage";
+
+import {
+  RedemptionReportPage,
+} from "./pages/admin/RedemptionReportPage";
+
+import {
+  StallReportPage,
+} from "./pages/admin/StallReportPage";
+
+import {
+  CollaboratorReportPage,
+} from "./pages/admin/CollaboratorReportPage";
+
+import {
   AdminStallsPage,
 } from "./pages/admin/AdminStallsPage";
 
@@ -75,9 +107,9 @@ import {
 export default function App() {
   return (
     <Routes>
-      {/* =========================
+      {/* =====================================================
           RUTAS PÚBLICAS
-      ========================== */}
+      ====================================================== */}
       <Route element={<PublicLayout />}>
         <Route
           path="/registro"
@@ -85,55 +117,58 @@ export default function App() {
         />
       </Route>
 
-      {/* =========================
-          LOGIN PERSONAL OPERATIVO
-      ========================== */}
+      {/* =====================================================
+          LOGIN DEL PERSONAL OPERATIVO
+      ====================================================== */}
       <Route
         path="/personal/login"
         element={<StaffLoginPage />}
       />
 
-      {/* =========================
+      {/* =====================================================
           PERSONAL OPERATIVO
-      ========================== */}
-    <Route element={<StaffLayout />}>
-  <Route
-    path="/asistencia"
-    element={
-      <StaffRoute>
-        <OperationPage
-          mode="ASISTENCIA"
+      ====================================================== */}
+      <Route element={<StaffLayout />}>
+        <Route
+          path="/asistencia"
+          element={
+            <StaffRoute>
+              <OperationPage
+                key="ASISTENCIA"
+                mode="ASISTENCIA"
+              />
+            </StaffRoute>
+          }
         />
-      </StaffRoute>
-    }
-  />
 
-  <Route
-    path="/desayuno"
-    element={
-      <StaffRoute>
-        <OperationPage
-          mode="DESAYUNO"
+        <Route
+          path="/desayuno"
+          element={
+            <StaffRoute>
+              <OperationPage
+                key="DESAYUNO"
+                mode="DESAYUNO"
+              />
+            </StaffRoute>
+          }
         />
-      </StaffRoute>
-    }
-  />
 
-  <Route
-    path="/cena"
-    element={
-      <StaffRoute>
-        <OperationPage
-          mode="CENA"
+        <Route
+          path="/cena"
+          element={
+            <StaffRoute>
+              <OperationPage
+                key="CENA"
+                mode="CENA"
+              />
+            </StaffRoute>
+          }
         />
-      </StaffRoute>
-    }
-  />
-</Route>
+      </Route>
 
-      {/* =========================
+      {/* =====================================================
           LOGINS
-      ========================== */}
+      ====================================================== */}
       <Route
         path="/admin/login"
         element={<AdminLoginPage />}
@@ -149,10 +184,13 @@ export default function App() {
         element={<StallLoginPage />}
       />
 
-      {/* =========================
+      {/* =====================================================
           PANEL ADMINISTRATIVO
-      ========================== */}
+      ====================================================== */}
       <Route element={<AdminLayout />}>
+        {/* =========================
+            INICIO DE REPORTES
+        ========================== */}
         <Route
           path="/admin/reportes"
           element={
@@ -162,6 +200,105 @@ export default function App() {
           }
         />
 
+        {/* =========================
+            REPORTE DE ASISTENTES
+        ========================== */}
+        <Route
+          path="/admin/reportes/asistentes"
+          element={
+            <ProtectedRoute>
+              <AttendeeReportPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =========================
+            REPORTE POR REGIONES
+        ========================== */}
+        <Route
+          path="/admin/reportes/regiones"
+          element={
+            <ProtectedRoute>
+              <RegionReportPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =========================
+            REPORTE POR IGLESIAS
+        ========================== */}
+        <Route
+          path="/admin/reportes/iglesias"
+          element={
+            <ProtectedRoute>
+              <ChurchReportPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =========================
+            RANKING DE IGLESIAS
+        ========================== */}
+        <Route
+          path="/admin/reportes/ranking-iglesias"
+          element={
+            <ProtectedRoute>
+              <ChurchRankingPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =========================
+            REPORTE DE ALIMENTACIÓN
+        ========================== */}
+        <Route
+          path="/admin/reportes/alimentacion"
+          element={
+            <ProtectedRoute>
+              <MealReportPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =========================
+            REPORTE DE CANJES
+        ========================== */}
+        <Route
+          path="/admin/reportes/canjes"
+          element={
+            <ProtectedRoute>
+              <RedemptionReportPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =========================
+            REPORTE DE PUESTOS
+        ========================== */}
+        <Route
+          path="/admin/reportes/puestos"
+          element={
+            <ProtectedRoute>
+              <StallReportPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =========================
+            REPORTE DE COLABORADORES
+        ========================== */}
+        <Route
+          path="/admin/reportes/colaboradores"
+          element={
+            <ProtectedRoute>
+              <CollaboratorReportPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =========================
+            GESTIÓN DE PUESTOS
+        ========================== */}
         <Route
           path="/admin/puestos"
           element={
@@ -171,6 +308,9 @@ export default function App() {
           }
         />
 
+        {/* =========================
+            GESTIÓN DE COLABORADORES
+        ========================== */}
         <Route
           path="/admin/colaboradores"
           element={
@@ -180,6 +320,9 @@ export default function App() {
           }
         />
 
+        {/* =========================
+            PERSONAL OPERATIVO
+        ========================== */}
         <Route
           path="/admin/personal"
           element={
@@ -190,7 +333,7 @@ export default function App() {
         />
 
         {/* =========================
-            PANEL COLABORADOR
+            PANEL DEL COLABORADOR
         ========================== */}
         <Route
           path="/colaborador"
@@ -202,7 +345,7 @@ export default function App() {
         />
 
         {/* =========================
-            PANEL PUESTO
+            PANEL DEL PUESTO
         ========================== */}
         <Route
           path="/puesto"
@@ -214,9 +357,9 @@ export default function App() {
         />
       </Route>
 
-      {/* =========================
+      {/* =====================================================
           RUTA INICIAL
-      ========================== */}
+      ====================================================== */}
       <Route
         path="/"
         element={
@@ -227,9 +370,9 @@ export default function App() {
         }
       />
 
-      {/* =========================
+      {/* =====================================================
           RUTA NO ENCONTRADA
-      ========================== */}
+      ====================================================== */}
       <Route
         path="*"
         element={

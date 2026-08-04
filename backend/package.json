@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc",
     "start": "node dist/server.js",
     "seed:admin": "tsx src/scripts/createAdmin.ts",
     "seed:demo": "tsx src/scripts/seedDemo.ts"

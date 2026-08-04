@@ -8,6 +8,9 @@ import type {
 import { pool } from "../../config/db.js";
 import { lookupDni } from "../../services/dni.service.js";
 import { HttpError } from "../../utils/httpError.js";
+import {
+  asyncHandler,
+} from "../../utils/asyncHandler.js";
 
 export const publicRouter = Router();
 
@@ -257,22 +260,56 @@ publicRouter.get(
 /**
  * Consulta automática del DNI.
  */
-publicRouter.get("/dni/:dni", async (req, res) => {
-  const dni = z
-    .string()
-    .regex(
-      /^\d{8}$/,
-      "El DNI debe contener exactamente 8 dígitos.",
-    )
-    .parse(req.params.dni);
+/**
+ * Consulta automática del DNI.
+ *
+ * Antes de consultar los nombres,
+ * valida que el DNI no esté registrado.
+ */
+publicRouter.get(
+  "/dni/:dni",
+  asyncHandler(
+    async (req, res) => {
+      const dni = z
+        .string()
+        .regex(
+          /^\d{8}$/,
+          "El DNI debe contener exactamente 8 dígitos.",
+        )
+        .parse(req.params.dni);
 
-  const data = await lookupDni(dni);
+      const [existingRows] =
+        await pool.query<
+          ParticipantIdRow[]
+        >(
+          `
+            SELECT id
+            FROM participantes
+            WHERE dni = ?
+            LIMIT 1
+          `,
+          [dni],
+        );
 
-  res.status(200).json({
-    ok: true,
-    data,
-  });
-});
+      if (existingRows[0]) {
+        throw new HttpError(
+          409,
+          "El DNI ya se encuentra registrado en el evento.",
+        );
+      }
+
+      const data =
+        await lookupDni(dni);
+
+      res.status(200).json({
+        ok: true,
+        message:
+          "DNI validado correctamente.",
+        data,
+      });
+    },
+  ),
+);
 
 /**
  * Esquema para registrar participantes.

@@ -6,6 +6,8 @@ import {
 
 import {
   useForm,
+  type FieldErrors,
+  type SubmitErrorHandler,
   type SubmitHandler,
 } from "react-hook-form";
 
@@ -153,12 +155,140 @@ interface Catalogs {
   positions: Cargo[];
 }
 
-interface Message {
-  t:
-    | "success"
-    | "error";
+type MessageType =
+  | "success"
+  | "error"
+  | "warning"
+  | "info";
 
+interface Message {
+  t: MessageType;
+  title?: string;
   m: string;
+}
+
+interface AlertStyles {
+  container: string;
+  icon: string;
+  bar: string;
+  symbol: string;
+}
+
+function getMessageStyles(
+  type: MessageType,
+): AlertStyles {
+  if (type === "success") {
+    return {
+      container:
+        "border-emerald-300 bg-emerald-50 text-emerald-950",
+      icon:
+        "bg-emerald-600 text-white",
+      bar: "bg-emerald-500",
+      symbol: "✓",
+    };
+  }
+
+  if (type === "warning") {
+    return {
+      container:
+        "border-amber-300 bg-amber-50 text-amber-950",
+      icon:
+        "bg-amber-500 text-white",
+      bar: "bg-amber-500",
+      symbol: "!",
+    };
+  }
+
+  if (type === "info") {
+    return {
+      container:
+        "border-blue-300 bg-blue-50 text-blue-950",
+      icon:
+        "bg-blue-600 text-white",
+      bar: "bg-blue-500",
+      symbol: "i",
+    };
+  }
+
+  return {
+    container:
+      "border-red-300 bg-red-50 text-red-950",
+    icon:
+      "bg-red-600 text-white",
+    bar: "bg-red-500",
+    symbol: "!",
+  };
+}
+
+function getDefaultMessageTitle(
+  type: MessageType,
+): string {
+  if (type === "success") {
+    return "Operación realizada";
+  }
+
+  if (type === "warning") {
+    return "Revise la información";
+  }
+
+  if (type === "info") {
+    return "Información";
+  }
+
+  return "No se pudo completar la operación";
+}
+
+function getApiMessage(
+  error: unknown,
+  fallback: string,
+): string {
+  if (!axios.isAxiosError(error)) {
+    return fallback;
+  }
+
+  const message =
+    error.response?.data?.message;
+
+  return typeof message === "string" &&
+    message.trim()
+    ? message
+    : fallback;
+}
+
+function getFirstFormError(
+  errors: FieldErrors<FormValues>,
+): string {
+  const fields: Array<
+    keyof FormValues
+  > = [
+    "dni",
+    "nombres",
+    "apellidos",
+    "fechaNacimiento",
+    "sexo",
+    "celular",
+    "regionId",
+    "iglesiaId",
+    "regionManual",
+    "iglesiaManual",
+    "cargoId",
+    "cargoManual",
+    "aceptaReglamento",
+  ];
+
+  for (const field of fields) {
+    const fieldError = errors[field];
+
+    if (
+      fieldError &&
+      typeof fieldError.message ===
+        "string"
+    ) {
+      return fieldError.message;
+    }
+  }
+
+  return "Revise los campos marcados antes de continuar.";
 }
 
 export function RegisterPage() {
@@ -203,6 +333,21 @@ export function RegisterPage() {
   ] = useState<Message | null>(
     null,
   );
+
+  const showMessage = (
+    nextMessage: Message,
+  ) => {
+    setMessage(nextMessage);
+
+    window.requestAnimationFrame(
+      () => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      },
+    );
+  };
 
   const [
     registrationSuccess,
@@ -476,6 +621,7 @@ export function RegisterPage() {
    */
   useEffect(() => {
     setDniOk(false);
+    setMessage(null);
 
     if (
       !/^\d{8}$/.test(
@@ -545,39 +691,114 @@ export function RegisterPage() {
             );
 
             setDniOk(true);
-          } catch (error) {
-            setValue(
-              "nombres",
-              "",
-              {
-                shouldValidate:
-                  false,
-              },
-            );
+          } catch (error: unknown) {
+  setDniOk(false);
 
-            setValue(
-              "apellidos",
-              "",
-              {
-                shouldValidate:
-                  false,
-              },
-            );
+  setValue(
+    "nombres",
+    "",
+    {
+      shouldValidate:
+        false,
+    },
+  );
 
-            setMessage({
-              t: "error",
+  setValue(
+    "apellidos",
+    "",
+    {
+      shouldValidate:
+        false,
+    },
+  );
 
-              m:
-                axios.isAxiosError(
-                  error,
-                )
-                  ? error.response
-                      ?.data
-                      ?.message ??
-                    "No se pudo consultar el DNI."
-                  : "Error consultando el DNI.",
-            });
-          } finally {
+  if (
+    axios.isAxiosError(
+      error,
+    )
+  ) {
+    const status =
+      error.response?.status;
+
+    const backendMessage =
+      typeof error.response
+        ?.data?.message ===
+        "string"
+        ? error.response.data
+            .message
+        : null;
+
+    /**
+     * DNI duplicado.
+     */
+    if (status === 409) {
+      showMessage({
+        t: "warning",
+        title:
+          "DNI ya registrado",
+        m:
+          backendMessage ??
+          "El DNI ya se encuentra registrado en el evento.",
+      });
+
+      return;
+    }
+
+    /**
+     * DNI inválido o no encontrado.
+     */
+    if (
+      status === 400 ||
+      status === 404 ||
+      status === 422
+    ) {
+      showMessage({
+        t: "warning",
+        title:
+          "DNI no válido",
+        m:
+          backendMessage ??
+          "No fue posible validar el DNI ingresado.",
+      });
+
+      return;
+    }
+
+    /**
+     * El backend no respondió.
+     */
+    if (!error.response) {
+      showMessage({
+        t: "error",
+        title:
+          "Servidor no disponible",
+        m:
+          "No se pudo consultar el DNI porque el servidor no está respondiendo. Verifique que el backend esté iniciado.",
+      });
+
+      return;
+    }
+
+    showMessage({
+      t: "error",
+      title:
+        "No se pudo validar el DNI",
+      m:
+        backendMessage ??
+        "Ocurrió un problema al consultar el DNI.",
+    });
+
+    return;
+  }
+
+  showMessage({
+    t: "error",
+    title:
+      "Error inesperado",
+    m:
+      "Ocurrió un error inesperado al consultar el DNI.",
+  });
+} finally {
             setLoadingDni(
               false,
             );
@@ -607,16 +828,11 @@ export function RegisterPage() {
             !form.regionManual
               ?.trim()
           ) {
-            setMessage({
-              t: "error",
+            showMessage({
+              t: "warning",
+              title: "Región pendiente",
               m:
-                "Ingrese la región manual.",
-            });
-
-            window.scrollTo({
-              top: 0,
-              behavior:
-                "smooth",
+                "Ingrese el nombre de la región antes de continuar.",
             });
 
             return;
@@ -626,16 +842,12 @@ export function RegisterPage() {
             !form.iglesiaManual
               ?.trim()
           ) {
-            setMessage({
-              t: "error",
+            showMessage({
+              t: "warning",
+              title:
+                "Región eclesiástica pendiente",
               m:
                 "Ingrese la región eclesiástica o iglesia.",
-            });
-
-            window.scrollTo({
-              top: 0,
-              behavior:
-                "smooth",
             });
 
             return;
@@ -643,16 +855,11 @@ export function RegisterPage() {
         } else if (
           !form.iglesiaId
         ) {
-          setMessage({
-            t: "error",
+          showMessage({
+            t: "warning",
+            title: "Seleccione una iglesia",
             m:
-              "Seleccione una región eclesiástica.",
-          });
-
-          window.scrollTo({
-            top: 0,
-            behavior:
-              "smooth",
+              "Debe seleccionar una región eclesiástica para continuar.",
           });
 
           return;
@@ -663,16 +870,11 @@ export function RegisterPage() {
           !form.cargoManual
             ?.trim()
         ) {
-          setMessage({
-            t: "error",
+          showMessage({
+            t: "warning",
+            title: "Cargo pendiente",
             m:
-              "Ingrese el cargo.",
-          });
-
-          window.scrollTo({
-            top: 0,
-            behavior:
-              "smooth",
+              "Ingrese el cargo correspondiente antes de continuar.",
           });
 
           return;
@@ -787,26 +989,92 @@ export function RegisterPage() {
           error,
         );
 
-        setMessage({
-          t: "error",
+        if (axios.isAxiosError(error)) {
+          const status =
+            error.response?.status;
 
-          m:
-            axios.isAxiosError(
+          const backendMessage =
+            getApiMessage(
               error,
-            )
-              ? error.response
-                  ?.data
-                  ?.message ??
-                "No se pudo completar el registro."
-              : "Ocurrió un error inesperado durante el registro.",
-        });
+              "No se pudo completar el registro.",
+            );
 
-        window.scrollTo({
-          top: 0,
-          behavior:
-            "smooth",
+          if (status === 409) {
+            showMessage({
+              t: "warning",
+              title: "DNI ya registrado",
+              m: backendMessage,
+            });
+
+            return;
+          }
+
+          if (
+            status === 400 ||
+            status === 422
+          ) {
+            showMessage({
+              t: "warning",
+              title:
+                "Información inválida",
+              m: backendMessage,
+            });
+
+            return;
+          }
+
+          if (status === 404) {
+            showMessage({
+              t: "error",
+              title:
+                "Información no encontrada",
+              m: backendMessage,
+            });
+
+            return;
+          }
+
+          if (!error.response) {
+            showMessage({
+              t: "error",
+              title:
+                "No hay conexión con el servidor",
+              m:
+                "No se pudo conectar con el sistema. Verifique su conexión e intente nuevamente.",
+            });
+
+            return;
+          }
+
+          showMessage({
+            t: "error",
+            title:
+              "No se pudo completar el registro",
+            m: backendMessage,
+          });
+
+          return;
+        }
+
+        showMessage({
+          t: "error",
+          title: "Error inesperado",
+          m:
+            "Ocurrió un error inesperado durante el registro. Intente nuevamente.",
         });
       }
+    };
+
+  const invalidSubmit:
+    SubmitErrorHandler<FormValues> =
+    (formErrors) => {
+      showMessage({
+        t: "warning",
+        title: "Revise el formulario",
+        m: getFirstFormError(
+          formErrors,
+        ),
+      });
     };
 
   /**
@@ -1002,61 +1270,73 @@ export function RegisterPage() {
           </p>
         </div>
 
-        {message && (
-          <div
-            role="alert"
-            aria-live="polite"
-            className={`mb-6 flex items-start gap-3 rounded-xl border px-4 py-4 shadow-sm ${
-              message.t ===
-              "success"
-                ? "border-green-300 bg-green-50 text-green-800"
-                : "border-red-300 bg-red-50 text-red-800"
-            }`}
-          >
+        {message && (() => {
+          const styles =
+            getMessageStyles(
+              message.t,
+            );
+
+          return (
             <div
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-black ${
+              role={
                 message.t ===
-                "success"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {message.t ===
-              "success"
-                ? "✓"
-                : "!"}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="font-bold">
-                {message.t ===
-                "success"
-                  ? "Registro exitoso"
-                  : "Ocurrió un problema"}
-              </p>
-
-              <p className="mt-1 text-sm leading-6">
-                {message.m}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                setMessage(null)
+                "error"
+                  ? "alert"
+                  : "status"
               }
-              className="rounded-lg px-2 py-1 text-xl leading-none hover:bg-black/5"
-              aria-label="Cerrar mensaje"
-              title="Cerrar"
+              aria-live={
+                message.t ===
+                "error"
+                  ? "assertive"
+                  : "polite"
+              }
+              className={`mb-7 overflow-hidden rounded-2xl border shadow-lg ${styles.container}`}
             >
-              ×
-            </button>
-          </div>
-        )}
+              <div className="flex items-start gap-4 p-5">
+                <div
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-black shadow-sm ${styles.icon}`}
+                  aria-hidden="true"
+                >
+                  {styles.symbol}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-black md:text-lg">
+                    {message.title ??
+                      getDefaultMessageTitle(
+                        message.t,
+                      )}
+                  </h2>
+
+                  <p className="mt-1 text-sm leading-6 md:text-base">
+                    {message.m}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMessage(null)
+                  }
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-2xl font-bold leading-none opacity-60 transition hover:bg-black/10 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-current"
+                  aria-label="Cerrar mensaje"
+                  title="Cerrar mensaje"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div
+                className={`h-1.5 w-full ${styles.bar}`}
+              />
+            </div>
+          );
+        })()}
 
         <form
           onSubmit={handleSubmit(
             submit,
+            invalidSubmit,
           )}
           className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2"
         >
@@ -1070,11 +1350,25 @@ export function RegisterPage() {
               <Input
                 {...register(
                   "dni",
+                  {
+                    onChange: () => {
+                      if (message) {
+                        setMessage(null);
+                      }
+                    },
+                  },
                 )}
                 maxLength={8}
                 inputMode="numeric"
+                autoComplete="off"
                 placeholder="Ingrese los 8 dígitos"
-                className="pr-12"
+                className={`pr-14 ${
+                  errors.dni
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                    : dniOk
+                      ? "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-100"
+                      : ""
+                }`}
                 onInput={(
                   event,
                 ) => {
@@ -1091,12 +1385,23 @@ export function RegisterPage() {
                 }}
               />
 
-              <span className="absolute inset-y-0 right-4 flex items-center font-bold">
-                {loadingDni
-                  ? "⌛"
-                  : dniOk
-                    ? "✓"
-                    : ""}
+              <span className="absolute inset-y-0 right-4 flex items-center">
+                {loadingDni && (
+                  <span
+                    className="h-5 w-5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600"
+                    aria-label="Consultando DNI"
+                  />
+                )}
+
+                {!loadingDni &&
+                  dniOk && (
+                    <span
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 font-black text-emerald-700"
+                      title="DNI validado"
+                    >
+                      ✓
+                    </span>
+                  )}
               </span>
             </div>
 
@@ -1117,16 +1422,16 @@ export function RegisterPage() {
             </label>
 
             <Input
-              {...register(
-                "nombres",
-              )}
-              readOnly={dniOk}
-              className={
-                dniOk
-                  ? "bg-slate-50"
-                  : ""
-              }
-            />
+  {...register(
+    "nombres",
+  )}
+  readOnly
+  disabled={
+    loadingDni ||
+    !dniOk
+  }
+  className="bg-slate-100 text-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
+/>
 
             {errors.nombres && (
               <small className="mt-1 block text-red-600">
@@ -1145,16 +1450,16 @@ export function RegisterPage() {
             </label>
 
             <Input
-              {...register(
-                "apellidos",
-              )}
-              readOnly={dniOk}
-              className={
-                dniOk
-                  ? "bg-slate-50"
-                  : ""
-              }
-            />
+  {...register(
+    "apellidos",
+  )}
+  readOnly
+  disabled={
+    loadingDni ||
+    !dniOk
+  }
+  className="bg-slate-100 text-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
+/>
 
             {errors.apellidos && (
               <small className="mt-1 block text-red-600">
@@ -1483,17 +1788,23 @@ export function RegisterPage() {
           </div>
 
           <Button
-            type="submit"
-            disabled={
-              isSubmitting ||
-              loadingCatalogs
-            }
-            className="md:col-span-2"
-          >
-            {isSubmitting
-              ? "Registrando..."
-              : "Completar inscripción"}
-          </Button>
+  type="submit"
+  disabled={
+    isSubmitting ||
+    loadingCatalogs ||
+    loadingDni ||
+    !dniOk
+  }
+  className="md:col-span-2"
+>
+  {isSubmitting
+    ? "Registrando..."
+    : loadingDni
+      ? "Validando DNI..."
+      : !dniOk
+        ? "Ingrese y valide su DNI"
+        : "Completar inscripción"}
+</Button>
         </form>
       </Card>
     </main>

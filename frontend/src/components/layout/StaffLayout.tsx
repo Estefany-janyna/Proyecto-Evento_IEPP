@@ -3,7 +3,9 @@ import {
   Outlet,
   useNavigate,
 } from "react-router-dom";
-
+import {
+  IEPPLogo,
+} from "../IEPPLogo";
 type StaffRole =
   | "ASISTENCIA"
   | "DESAYUNO"
@@ -81,21 +83,10 @@ export function StaffLayout() {
     <div className="min-h-screen bg-slate-100">
       <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950 text-white shadow-lg">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 font-black">
-              IE
-            </div>
-
-            <div>
-              <p className="font-black">
-                IEPP 2026
-              </p>
-
-              <p className="text-xs text-slate-400">
-                Personal operativo
-              </p>
-            </div>
-          </div>
+          <IEPPLogo
+            size="small"
+            subtitle="Personal operativo"
+            />
 
           <nav className="flex flex-wrap items-center gap-2">
             {menuItems.map(

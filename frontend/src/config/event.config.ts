@@ -1,5 +1,5 @@
 export const eventConfig = {
-  nombre: "Evento Nacional IEPP 2026",
+  nombre: "Gran Encuentro Internacional De Jóvenes",
 
   fecha: "Del 5 al 9 de agosto de 2026",
 

@@ -17,6 +17,9 @@ import {
 import {
   authService,
 } from "../../services";
+import {
+  IEPPLogo,
+} from "../../components/IEPPLogo";
 
 type StaffRole =
   | "ASISTENCIA"
@@ -172,9 +175,12 @@ export function StaffLoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-10">
       <Card className="w-full max-w-md">
         <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-xl font-black text-white">
-            IE
-          </div>
+          <div className="flex justify-center">
+            <IEPPLogo
+                size="large"
+                showText={false}
+            />
+            </div>
 
           <h1 className="mt-5 text-3xl font-black">
             Acceso del personal

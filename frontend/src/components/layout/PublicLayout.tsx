@@ -4,29 +4,34 @@ import {
   Outlet,
 } from "react-router-dom";
 
+import {
+  IEPPLogo,
+} from "../IEPPLogo";
+
 export function PublicLayout() {
   return (
     <div className="min-h-screen bg-slate-950">
       <header className="border-b border-slate-800 bg-slate-950 text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link
             to="/registro"
-            className="text-xl font-black"
+            aria-label="Ir al registro"
           >
-            IEPP 2026
+            <IEPPLogo
+              size="small"
+              subtitle="Inscripción oficial"
+            />
           </Link>
 
           <nav>
             <NavLink
               to="/registro"
-              className={({
-                isActive,
-              }) =>
+              className={({ isActive }) =>
                 [
-                  "rounded-xl px-4 py-2 font-semibold transition",
+                  "rounded-xl px-5 py-3 text-sm font-bold transition",
                   isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-white hover:bg-white/10",
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white",
                 ].join(" ")
               }
             >
