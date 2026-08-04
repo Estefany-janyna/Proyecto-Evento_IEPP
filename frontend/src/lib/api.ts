@@ -33,12 +33,23 @@ api.interceptors.request.use(
         `Bearer ${token}`;
     }
 
+    console.log(
+      "Solicitud API:",
+      {
+        baseURL:
+          config.baseURL,
+
+        url:
+          config.url,
+
+        finalUrl:
+          `${config.baseURL ?? ""}${config.url ?? ""}`,
+      },
+    );
+
     return config;
   },
 
-  (error) => {
-    return Promise.reject(
-      error,
-    );
-  },
+  (error) =>
+    Promise.reject(error),
 );
