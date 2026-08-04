@@ -852,22 +852,6 @@ export function RegisterPage() {
                 </p>
               </div>
 
-              <div className="mt-8 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50 p-6 text-center">
-                <p className="text-sm font-bold uppercase tracking-wider text-blue-700">
-                  Código de inscripción
-                </p>
-
-                <p className="mt-3 break-all text-4xl font-black tracking-widest text-blue-900 md:text-5xl">
-                  {
-                    registrationSuccess.codigo
-                  }
-                </p>
-
-                <p className="mt-3 text-sm text-blue-700">
-                  Tome una captura de pantalla o anote este código.
-                </p>
-              </div>
-
               <div className="mt-8 rounded-2xl border border-amber-300 bg-amber-50 p-6">
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-200 text-2xl">
@@ -921,12 +905,6 @@ export function RegisterPage() {
                       HORA DEL EVENTO
                     </p>
 
-                    <p className="mt-1 font-black text-slate-900">
-                      {
-                        eventConfig.hora
-                      }
-                    </p>
-
                     <p className="mt-1 text-sm text-slate-600">
                       Ingreso desde las{" "}
                       {
@@ -946,24 +924,6 @@ export function RegisterPage() {
                       }
                     </p>
                   </div>
-                </div>
-
-                <div className="mt-4 rounded-2xl bg-slate-50 p-5">
-                  <p className="text-sm font-bold text-slate-500">
-                    DIRECCIÓN
-                  </p>
-
-                  <p className="mt-1 font-black text-slate-900">
-                    {
-                      eventConfig.direccion
-                    }
-                  </p>
-
-                  <p className="mt-1 text-slate-600">
-                    {
-                      eventConfig.ciudad
-                    }
-                  </p>
                 </div>
               </div>
 
@@ -996,16 +956,6 @@ export function RegisterPage() {
                     ),
                   )}
                 </ul>
-              </div>
-
-              <div className="mt-8 rounded-2xl border border-slate-200 p-5 text-center">
-                <p className="font-bold text-slate-800">
-                  Guarde esta información
-                </p>
-
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Tome una captura de pantalla para recordar su código, la fecha, la hora y el lugar del evento.
-                </p>
               </div>
 
               <button
