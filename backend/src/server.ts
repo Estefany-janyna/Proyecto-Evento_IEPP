@@ -8,14 +8,44 @@ import { testDatabase } from "./config/db.js";
 const server =
   http.createServer(app);
 
+/**
+ * Permitir Socket.IO desde:
+ * - frontend local
+ * - frontend publicado en Railway
+ */
+const allowedOrigins = Array.from(
+  new Set([
+    "http://localhost:5173",
+    env.FRONTEND_URL,
+  ]),
+);
+
 const io =
   new Server(server, {
     cors: {
       origin:
-        env.FRONTEND_URL,
+        allowedOrigins,
 
       credentials: true,
+
+      methods: [
+        "GET",
+        "POST",
+      ],
+
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+      ],
     },
+
+    transports: [
+      "polling",
+      "websocket",
+    ],
+
+    pingTimeout: 20000,
+    pingInterval: 25000,
   });
 
 app.set(
@@ -40,10 +70,39 @@ io.on(
 
     socket.on(
       "disconnect",
-      () => {
+      (reason) => {
         console.log(
-          `Socket desconectado: ${socket.id}`,
+          `Socket desconectado: ${socket.id}. Motivo: ${reason}`,
         );
+      },
+    );
+
+    socket.on(
+      "error",
+      (error) => {
+        console.error(
+          `Error de socket ${socket.id}:`,
+          error,
+        );
+      },
+    );
+  },
+);
+
+io.engine.on(
+  "connection_error",
+  (error) => {
+    console.error(
+      "Error de conexión Socket.IO:",
+      {
+        code:
+          error.code,
+
+        message:
+          error.message,
+
+        context:
+          error.context,
       },
     );
   },
@@ -52,26 +111,30 @@ io.on(
 async function startServer():
   Promise<void> {
   try {
-    /**
-     * Verifica la base antes
-     * de iniciar la API.
-     */
     await testDatabase();
 
     server.listen(
       env.PORT,
       "0.0.0.0",
       () => {
+        console.log(
+          `Entorno: ${env.NODE_ENV}`,
+        );
+
+        console.log(
+          `Frontend permitido: ${env.FRONTEND_URL}`,
+        );
+
+        console.log(
+          `API iniciada en el puerto ${env.PORT}`,
+        );
+
         if (
-          env.NODE_ENV ===
+          env.NODE_ENV !==
           "production"
         ) {
           console.log(
-            `API iniciada en el puerto ${env.PORT}`,
-          );
-        } else {
-          console.log(
-            `API: http://localhost:${env.PORT}/api`,
+            `API local: http://localhost:${env.PORT}/api`,
           );
         }
       },
@@ -85,5 +148,55 @@ async function startServer():
     process.exit(1);
   }
 }
+
+/**
+ * Cierre ordenado del servidor.
+ */
+async function shutdown(
+  signal: string,
+): Promise<void> {
+  console.log(
+    `${signal} recibido. Cerrando servidor...`,
+  );
+
+  io.close();
+
+  server.close(
+    (error) => {
+      if (error) {
+        console.error(
+          "Error al cerrar el servidor:",
+          error,
+        );
+
+        process.exit(1);
+      }
+
+      console.log(
+        "Servidor cerrado correctamente.",
+      );
+
+      process.exit(0);
+    },
+  );
+}
+
+process.on(
+  "SIGTERM",
+  () => {
+    void shutdown(
+      "SIGTERM",
+    );
+  },
+);
+
+process.on(
+  "SIGINT",
+  () => {
+    void shutdown(
+      "SIGINT",
+    );
+  },
+);
 
 void startServer();
