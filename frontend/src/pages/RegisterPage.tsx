@@ -1501,18 +1501,6 @@ useEffect(() => {
             )}
           </div>
 
-          {dniManual && (
-            <div className="md:col-span-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <p className="font-bold">
-                Consulta automática no disponible
-              </p>
-
-              <p className="mt-1">
-                Verifique que el DNI esté correctamente escrito e ingrese los nombres y apellidos manualmente.
-              </p>
-            </div>
-          )}
-
           {/* Fecha de nacimiento */}
           <div>
             <label className="mb-2 block font-semibold">
