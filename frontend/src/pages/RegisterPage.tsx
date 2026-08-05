@@ -804,7 +804,7 @@ useEffect(() => {
               "Ingrese los datos manualmente",
 
             m:
-              "No fue posible consultar el DNI automáticamente. Complete los nombres y apellidos para continuar.",
+              "No fue posible consultar el DNI automáticamente. Complete los NOMBRES y APELLIDOS para continuar. Ingrese toda la información en MAYÚSCULAS.",
           });
         } finally {
           setLoadingDni(false);
