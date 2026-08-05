@@ -313,6 +313,11 @@ export function RegisterPage() {
   ] = useState(false);
 
   const [
+    dniManual,
+    setDniManual,
+  ] = useState(false);
+
+  const [
     loadingDni,
     setLoadingDni,
   ] = useState(false);
@@ -616,206 +621,208 @@ export function RegisterPage() {
     setValue,
   ]);
 
-  /**
-   * Consulta automática de DNI.
-   */
-  useEffect(() => {
-    setDniOk(false);
-    setMessage(null);
-
-    if (
-      !/^\d{8}$/.test(
-        dni || "",
-      )
-    ) {
-      setValue(
-        "nombres",
-        "",
-        {
-          shouldValidate:
-            false,
-        },
-      );
-
-      setValue(
-        "apellidos",
-        "",
-        {
-          shouldValidate:
-            false,
-        },
-      );
-
-      return;
-    }
-
-    const timer =
-      window.setTimeout(
-        async () => {
-          try {
-            setLoadingDni(true);
-            setMessage(null);
-
-            const result =
-              await publicService.dni(
-                dni,
-              );
-
-            setValue(
-              "nombres",
-              result.nombres ??
-                "",
-              {
-                shouldValidate:
-                  true,
-              },
-            );
-
-            const apellidos = [
-              result.apellidoPaterno ??
-                result.apellido_paterno,
-
-              result.apellidoMaterno ??
-                result.apellido_materno,
-            ]
-              .filter(Boolean)
-              .join(" ");
-
-            setValue(
-              "apellidos",
-              apellidos,
-              {
-                shouldValidate:
-                  true,
-              },
-            );
-
-            setDniOk(true);
-          } catch (error: unknown) {
+/**
+ * Consulta automática del DNI.
+ *
+ * Cuando la consulta externa falla,
+ * habilita el ingreso manual de
+ * nombres y apellidos.
+ */
+useEffect(() => {
   setDniOk(false);
+  setDniManual(false);
 
-  setValue(
-    "nombres",
-    "",
-    {
-      shouldValidate:
-        false,
-    },
-  );
+  const numeroDni =
+    (dni || "").trim();
 
-  setValue(
-    "apellidos",
-    "",
-    {
-      shouldValidate:
-        false,
-    },
-  );
-
+  /**
+   * Mientras el DNI no tenga
+   * exactamente 8 dígitos,
+   * limpiar nombres y apellidos.
+   */
   if (
-    axios.isAxiosError(
-      error,
+    !/^\d{8}$/.test(
+      numeroDni,
     )
   ) {
-    const status =
-      error.response?.status;
+    setValue(
+      "nombres",
+      "",
+      {
+        shouldValidate:
+          false,
+      },
+    );
 
-    const backendMessage =
-      typeof error.response
-        ?.data?.message ===
-        "string"
-        ? error.response.data
-            .message
-        : null;
-
-    /**
-     * DNI duplicado.
-     */
-    if (status === 409) {
-      showMessage({
-        t: "warning",
-        title:
-          "DNI ya registrado",
-        m:
-          backendMessage ??
-          "El DNI ya se encuentra registrado en el evento.",
-      });
-
-      return;
-    }
-
-    /**
-     * DNI inválido o no encontrado.
-     */
-    if (
-      status === 400 ||
-      status === 404 ||
-      status === 422
-    ) {
-      showMessage({
-        t: "warning",
-        title:
-          "DNI no válido",
-        m:
-          backendMessage ??
-          "No fue posible validar el DNI ingresado.",
-      });
-
-      return;
-    }
-
-    /**
-     * El backend no respondió.
-     */
-    if (!error.response) {
-      showMessage({
-        t: "error",
-        title:
-          "Servidor no disponible",
-        m:
-          "No se pudo consultar el DNI porque el servidor no está respondiendo. Verifique que el backend esté iniciado.",
-      });
-
-      return;
-    }
-
-    showMessage({
-      t: "error",
-      title:
-        "No se pudo validar el DNI",
-      m:
-        backendMessage ??
-        "Ocurrió un problema al consultar el DNI.",
-    });
+    setValue(
+      "apellidos",
+      "",
+      {
+        shouldValidate:
+          false,
+      },
+    );
 
     return;
   }
 
-  showMessage({
-    t: "error",
-    title:
-      "Error inesperado",
-    m:
-      "Ocurrió un error inesperado al consultar el DNI.",
-  });
-} finally {
-            setLoadingDni(
-              false,
-            );
-          }
-        },
-        450,
-      );
+  const timer =
+    window.setTimeout(
+      async () => {
+        try {
+          setLoadingDni(true);
+          setMessage(null);
 
-    return () => {
-      window.clearTimeout(
-        timer,
-      );
-    };
-  }, [
-    dni,
-    setValue,
-  ]);
+          const result =
+            await publicService.dni(
+              numeroDni,
+            );
+
+          setValue(
+            "nombres",
+            result.nombres ??
+              "",
+            {
+              shouldValidate:
+                true,
+
+              shouldDirty:
+                true,
+            },
+          );
+
+          const apellidos = [
+            result.apellidoPaterno ??
+              result.apellido_paterno,
+
+            result.apellidoMaterno ??
+              result.apellido_materno,
+          ]
+            .filter(Boolean)
+            .join(" ");
+
+          setValue(
+            "apellidos",
+            apellidos,
+            {
+              shouldValidate:
+                true,
+
+              shouldDirty:
+                true,
+            },
+          );
+
+          setDniOk(true);
+          setDniManual(false);
+        } catch (error) {
+          console.error(
+            "Error consultando DNI:",
+            error,
+          );
+
+          setDniOk(false);
+
+          /**
+           * Un estado 409 significa que
+           * el DNI ya está registrado.
+           * En ese caso no debe permitirse
+           * otro registro manual.
+           */
+          if (
+            axios.isAxiosError(
+              error,
+            ) &&
+            error.response?.status ===
+              409
+          ) {
+            setDniManual(false);
+
+            setValue(
+              "nombres",
+              "",
+              {
+                shouldValidate:
+                  false,
+              },
+            );
+
+            setValue(
+              "apellidos",
+              "",
+              {
+                shouldValidate:
+                  false,
+              },
+            );
+
+            showMessage({
+              t: "error",
+
+              title:
+                "DNI ya registrado",
+
+              m:
+                error.response
+                  ?.data
+                  ?.message ??
+                "El DNI ya se encuentra registrado.",
+            });
+
+            return;
+          }
+
+          /**
+           * Para errores del servicio de
+           * consulta, permitir completar
+           * nombres y apellidos manualmente.
+           */
+          setDniManual(true);
+
+          setValue(
+            "nombres",
+            "",
+            {
+              shouldValidate:
+                false,
+            },
+          );
+
+          setValue(
+            "apellidos",
+            "",
+            {
+              shouldValidate:
+                false,
+            },
+          );
+
+          showMessage({
+            t: "warning",
+
+            title:
+              "Ingrese los datos manualmente",
+
+            m:
+              "No fue posible consultar el DNI automáticamente. Complete los nombres y apellidos para continuar.",
+          });
+        } finally {
+          setLoadingDni(false);
+        }
+      },
+
+      450,
+    );
+
+  return () => {
+    window.clearTimeout(
+      timer,
+    );
+  };
+}, [
+  dni,
+  setValue,
+]);
 
   const submit:
     SubmitHandler<FormValues> =
@@ -976,6 +983,7 @@ export function RegisterPage() {
         reset();
         setChurches([]);
         setDniOk(false);
+        setDniManual(false);
         setMessage(null);
 
         window.scrollTo({
@@ -1421,16 +1429,27 @@ export function RegisterPage() {
               Nombres
             </label>
 
-            <Input
+     <Input
   {...register(
     "nombres",
   )}
-  readOnly
-  disabled={
-    loadingDni ||
-    !dniOk
+  readOnly={
+    dniOk ||
+    loadingDni
   }
-  className="bg-slate-100 text-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
+  placeholder={
+    loadingDni
+      ? "Consultando DNI..."
+      : dniManual
+        ? "Ingrese los nombres manualmente"
+        : "Los nombres se completarán con el DNI"
+  }
+  className={
+    dniOk ||
+    loadingDni
+      ? "bg-slate-50"
+      : ""
+  }
 />
 
             {errors.nombres && (
@@ -1449,16 +1468,27 @@ export function RegisterPage() {
               Apellidos
             </label>
 
-            <Input
+       <Input
   {...register(
     "apellidos",
   )}
-  readOnly
-  disabled={
-    loadingDni ||
-    !dniOk
+  readOnly={
+    dniOk ||
+    loadingDni
   }
-  className="bg-slate-100 text-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
+  placeholder={
+    loadingDni
+      ? "Consultando DNI..."
+      : dniManual
+        ? "Ingrese los apellidos manualmente"
+        : "Los apellidos se completarán con el DNI"
+  }
+  className={
+    dniOk ||
+    loadingDni
+      ? "bg-slate-50"
+      : ""
+  }
 />
 
             {errors.apellidos && (
@@ -1470,6 +1500,18 @@ export function RegisterPage() {
               </small>
             )}
           </div>
+
+          {dniManual && (
+            <div className="md:col-span-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <p className="font-bold">
+                Consulta automática no disponible
+              </p>
+
+              <p className="mt-1">
+                Verifique que el DNI esté correctamente escrito e ingrese los nombres y apellidos manualmente.
+              </p>
+            </div>
+          )}
 
           {/* Fecha de nacimiento */}
           <div>
@@ -1788,23 +1830,23 @@ export function RegisterPage() {
           </div>
 
           <Button
-  type="submit"
-  disabled={
-    isSubmitting ||
-    loadingCatalogs ||
-    loadingDni ||
-    !dniOk
-  }
-  className="md:col-span-2"
->
-  {isSubmitting
-    ? "Registrando..."
-    : loadingDni
-      ? "Validando DNI..."
-      : !dniOk
-        ? "Ingrese y valide su DNI"
-        : "Completar inscripción"}
-</Button>
+            type="submit"
+            disabled={
+              isSubmitting ||
+              loadingCatalogs ||
+              loadingDni ||
+              !(dniOk || dniManual)
+            }
+            className="md:col-span-2"
+          >
+            {isSubmitting
+              ? "Registrando..."
+              : loadingDni
+                ? "Validando DNI..."
+                : dniOk || dniManual
+                  ? "Completar inscripción"
+                  : "Ingrese y valide su DNI"}
+          </Button>
         </form>
       </Card>
     </main>
